@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/jquery.js"></script>
+  <script src="js/popcorn.js"></script>
+  <script> 
+    $(function(){
+      var video = $('<video>', {
+            src: '../video/trailer.mp4',
+            css:{
+              width: 600,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              zIndex: '1'
+            }
+          })
+          .appendTo('body')
+          .get(0),
+
+          kernal = Popcorn(video);
+
+
+      kernal.listen('canplaythrough', function(){
+
+        var canvasElem = $('#canvas'),
+            canvas = canvasElem
+              .get(0)
+              .getContext("2d");
+
+        canvas.lineWidth = 3;
+        canvas.strokeStyle = 'gray';
+        canvas.lineCap = 'round';
+        canvas.pX = undefined;
+        canvas.pY = undefined;
+        
+        var app = {
+
+          //bind click events
+          init: function() {
+
+            //set pX and pY from first click
+            canvasElem
+              .bind('mousedown', app.set_anchor_point)
+              .bind('mouseup', function(e){
+                canvasElem
+                  .unbind('mousemove', app.draw)
+              })
+          },
+
+          set_anchor_point: function(e) {
+            canvasElem.bind('mousemove', app.draw)
+            canvas.pX = e.pageX;
+            canvas.pY = e.pageY;
+            e.preventDefault();
+          },
+
+          draw: function(e) {
+            var moveX = e.pageX - canvas.pX,
+                moveY = e.pageY - canvas.pY;
+            app.move(moveX, moveY);
+          },
+          move: function(changeX, changeY) {
+            canvas.beginPath();
+            canvas.moveTo(canvas.pX,canvas.pY);
+
+            canvas.pX += changeX;
+            canvas.pY += changeY;
+
+            canvas.lineTo(canvas.pX, canvas.pY);
+            canvas.stroke();
+          },
+          storage : function(){
+            if ( !localStorage.getItem( 'Rotoscoper' ) ){
+              localStorage.setItem( 'Rotoscoper', '[]' )
+            }
+            return JSON.parse( localStorage.getItem( 'Rotoscoper' ) )
+          },
+          save_frame: function(){
+            var _storage = app.storage();
+            
+            _storage.push({
+              currentTime: kernal.currentTime(),
+              frame: canvas.canvas.toDataURL()
+            })
+
+            localStorage.setItem('Rotoscoper', JSON.stringify( _storage ));
+          }
+        };
+        
+        app.init()
+
+        kernal.currentTime(3)
+
+
+        $('#advance').click(function(){
+
+          kernal.currentTime(kernal.currentTime() + .1);
+
+          app.save_frame();
+
+        });
+
+        $('#playback').toggle(function(){
+
+          kernal.play();
+          $(this).text('pause');
+          
+          kernal.listen('timeupdate', function(){
+            console.log(this.currentTime())
+            console.log(app.storage())
+          });
+          
+        }, function(){
+          kernal.pause();
+          $(this).text('play');
+        })
+
+      });
+    })
+  </script>
+</head>
+<body>
+  <button id="advance" style="float: right">Advance</button>
+  <button id="playback" style="float: right">Playback</button>
+  <canvas id="canvas" width="600px" height="335px" style="position: absolute; top: 0px; left: 0px; z-index: 2; "></canvas>
+</body>
+</html>
