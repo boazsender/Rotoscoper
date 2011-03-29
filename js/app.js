@@ -1,3 +1,17 @@
+/*
+ * Rotoscoper app.js
+ * https://github.com/boazsender/Rotoscoper
+ *
+ * Copyright (c) 2010 Boaz Sender
+ * Authors: Boaz Sender
+ * Dual licensed under the MIT and GPL licenses.
+ * http://code.bocoup.com/license/
+ * 
+ * Canvas drawing code based on work from Mike Taylor's home page
+ * "_MT.CanvasDrawr" at http://miketaylr.com
+ *
+ */
+
 $(function(){
   var video = $('<video>', {
         src: '../video/trailer.mp4',
