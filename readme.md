@@ -1,5 +1,4 @@
-Rotoscoper
----------------
+#Rotoscoper
 ## A JavaScript Rotoscoping tool using jQuery and Popcorn.js
 
 #Todo
