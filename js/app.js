@@ -241,24 +241,24 @@ $(function(){
     
     });
 
-    $('#advance-fw,#advance-rw').click(function(){
+    $('#advance-fw,#advance-rw,#reset').click(function(){
 
       roto.saveFrameData();
-
+      
+      var _id = $(this)[0].id;
+      
       kernal.currentTime(
-        $(this)[0].id === 'advance-rw' ?
-          kernal.currentTime() - .1 :
-          kernal.currentTime() + .1
+        _id === 'reset' ? 0 : (
+          _id === 'advance-rw' ?
+            kernal.currentTime() - .1 :
+            kernal.currentTime() + .1
+        )
       );
 
       $('#time').html( kernal.currentTime().toFixed(1) );
 
     });
     
-    $('#reset').click(function(){
-      kernal.currentTime(0);
-    });    
-
     $('#playback').toggle(function(){
       kernal.play();
       $(this).text('||').attr('alt', 'pause');
