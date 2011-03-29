@@ -1,52 +1,52 @@
 
 (function( global, $ ) {
 
-	//	Remote load underscore
-	var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement, 
-			script = document.createElement("script");
+  //  Remote load underscore
+  var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement, 
+      script = document.createElement("script");
 
-	script.async = true;
-	script.src = "http://documentcloud.github.com/underscore/underscore-min.js";
+  script.async = true;
+  script.src = "http://documentcloud.github.com/underscore/underscore-min.js";
 
-	//	When underscore is available, define our ctor
-	script.onload = function() {
+  //  When underscore is available, define our ctor
+  script.onload = function() {
 
-		//	rotoFrame public API
-		function rotoFrame( options ) {
-			return new Frame( options );
-		}
+    //  rotoFrame public API
+    function rotoFrame( options ) {
+      return new Frame( options );
+    }
 
-		//	Frame ctor
-		//		deps: jQuery, Underscore
-		function Frame( options ) {
+    //  Frame ctor
+    //    deps: jQuery, Underscore
+    function Frame( options ) {
 
-			var self = this;
+      var self = this;
 
-			options.timeout || ( options.timeout = 0 );
-		
-			_.extend( this, options );
+      options.timeout || ( options.timeout = 0 );
+    
+      _.extend( this, options );
 
 
-			this.kernal.listen( "play", function() {
+      this.kernal.listen( "play", function() {
 
-				//  Call the rendering throttler
-				self.throttle();
+        //  Call the rendering throttler
+        self.throttle();
 
-			}); 
+      }); 
 
-			this.initMouse();
-		
-			return this;
-		}
+      this.initMouse();
+    
+      return this;
+    }
 
 
     Frame.prototype.initMouse = function() {
-			var self = this;
+      var self = this;
       //set pX and pY from first click
       this.canvas
         .bind('mousedown', function( e ) {
 
-        	self.setAnchorPoint( e );
+          self.setAnchorPoint( e );
 
         })
         .bind('mouseup', function( e ){
@@ -56,10 +56,10 @@
     };
 
     Frame.prototype.setAnchorPoint = function( e ) {
-    	var self = this;
-    	
+      var self = this;
+      
       this.canvas.bind('mousemove', function( e ) {
-      	self.draw( e );
+        self.draw( e );
       });
       
       this.context.pX = e.pageX;
@@ -107,61 +107,61 @@
       localStorage.setItem('Rotoscoper', JSON.stringify( _storage ));
 
       this.context.clearRect(0, 0, 600, 335)
-    };		
+    };    
 
-		Frame.prototype.throttle = function() {
-			//  Return immediately if paused/ended
-			if ( this.kernal.media.paused || this.kernal.media.ended ) {
-			  return;
-			}
-			
-			//  Process the current scene
-			this.render();
-			
-			//  Store ref to `this` context
-			var self = this;
-			
-			//  The actual throttling is handled here, 
-			//  throttle set to 20 fps
-			setTimeout(function () {
-			  
-			  //  Recall the processing throttler
-			  self.throttle();
+    Frame.prototype.throttle = function() {
+      //  Return immediately if paused/ended
+      if ( this.kernal.media.paused || this.kernal.media.ended ) {
+        return;
+      }
+      
+      //  Process the current scene
+      this.render();
+      
+      //  Store ref to `this` context
+      var self = this;
+      
+      //  The actual throttling is handled here, 
+      //  throttle set to 20 fps
+      setTimeout(function () {
+        
+        //  Recall the processing throttler
+        self.throttle();
 
-			}, this.timeout );	
-		}
+      }, this.timeout );  
+    }
 
-		Frame.prototype.render = function() {
+    Frame.prototype.render = function() {
 
-			$('#time').html( this.kernal.currentTime().toFixed(1) );
+      $('#time').html( this.kernal.currentTime().toFixed(1) );
 
-			this.context.clearRect(0, 0, 600, 335);
+      this.context.clearRect(0, 0, 600, 335);
 
-			var frame, _img;
+      var frame, _img;
 
-			// ^ RW: this is a VERY cool trick - what if you loaded all the "scenes" 
-			//				in earlier and hide them in the DOM?
-			frame = this.storage( this.kernal.currentTime().toFixed( 1 ) );
+      // ^ RW: this is a VERY cool trick - what if you loaded all the "scenes" 
+      //        in earlier and hide them in the DOM?
+      frame = this.storage( this.kernal.currentTime().toFixed( 1 ) );
 
-			//	Return if no frame to draw
-			if ( !frame ) {
-				return;
-			}
+      //  Return if no frame to draw
+      if ( !frame ) {
+        return;
+      }
 
-			_img = $('<img>', {
-				src : frame
-			}).get(0)
+      _img = $('<img>', {
+        src : frame
+      }).get(0)
 
-			this.context.drawImage( _img, 0, 0, 600, 335 );
+      this.context.drawImage( _img, 0, 0, 600, 335 );
 
-			// console.log( app.storage( this.currentTime().toFixed(1) ) );	
-		}
+      // console.log( app.storage( this.currentTime().toFixed(1) ) );  
+    }
 
 
-		global.rotoFrame = rotoFrame;	
-	}
+    global.rotoFrame = rotoFrame;  
+  }
 
-	head.insertBefore( script, head.firstChild );
+  head.insertBefore( script, head.firstChild );
 
 
 
@@ -197,11 +197,11 @@ $(function(){
     context.pX = undefined;
     context.pY = undefined;
 
-		var roto = rotoFrame({
-									kernal: kernal,
-									context: context, 
-									canvas: canvas
-								});
+    var roto = rotoFrame({
+                  kernal: kernal,
+                  context: context, 
+                  canvas: canvas
+                });
     
     $('#advance').click(function(){
       kernal.currentTime(kernal.currentTime() + .1);
