@@ -1,14 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script src="js/underscore.min.js"></script>
   <script src="js/jquery.js"></script>
   <script src="js/popcorn.js"></script>
   <script src="js/app.js"></script>
 </head>
 <body>
-  <button id="advance" style="margin: 0 0 0 750px">Advance</button>
-  <button id="playback" style="margin: 0 0 0 750px">Play</button>
-  <span style="float: right">Current Time: <span id="time"></span></span>
-  <canvas id="canvas" width="600px" height="335px" style="position: absolute; top: 0px; left: 0px; z-index: 2; "></canvas>
+	<canvas id="canvas" width="600px" height="335px" style="position: absolute; top: 0px; left: 0px; z-index: 2; "></canvas>
+	
+	<div style="position: absolute; top:340px">
+
+		<button id="reset" alt="back to beginning">|<</button>
+		<button id="advance-rw" alt="advance last frame"><<</button>
+		<button id="advance-fw" alt="advance next frame">>></button>
+		
+		<button id="playback" alt="play">></button>
+
+		<input name="colorpicker" type="text" alt="enter a color" placeholder="type color here">
+		<input name="sizepicker" type="range" alt="choose size" max="10" value="3">    
+	  
+	  <span>Current Frame: <span id="time">0.0</span></span>
+
+		<footer></footer>  
+	</div>  
+	
+	
 </body>
 </html>
