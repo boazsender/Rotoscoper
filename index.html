@@ -18,7 +18,7 @@
           .appendTo('body')
           .get(0),
 
-          kernal = Popcorn(video);
+          kernal = Popcorn(video)
 
 
       kernal.listen('canplaythrough', function(){
@@ -28,13 +28,29 @@
               .get(0)
               .getContext("2d");
 
+        kernal.listen('timeupdate', function(){
+
+           $('#time').html( this.currentTime().toFixed(1) );
+
+           canvas.clearRect(0, 0, 600, 335);
+
+           var _img = $('<img>', {
+             src : app.storage( this.currentTime().toFixed( 1 ) )
+           }).get(0)
+
+           canvas.drawImage( _img, 0, 0, 600, 335 );
+
+           // console.log( app.storage( this.currentTime().toFixed(1) ) );
+
+        });
+        
         canvas.lineWidth = 3;
         canvas.strokeStyle = 'gray';
         canvas.lineCap = 'round';
         canvas.pX = undefined;
         canvas.pY = undefined;
         
-        var app = {
+        var app = window.app = {
 
           //bind click events
           init: function() {
@@ -70,50 +86,42 @@
             canvas.lineTo(canvas.pX, canvas.pY);
             canvas.stroke();
           },
-          storage : function(){
+          storage : function( item ){
             if ( !localStorage.getItem( 'Rotoscoper' ) ){
-              localStorage.setItem( 'Rotoscoper', '[]' )
+              localStorage.setItem( 'Rotoscoper', '{}' )
             }
+            
+            if( item ) {
+              return JSON.parse( localStorage.getItem( 'Rotoscoper' ) )[ item ]
+            }
+
             return JSON.parse( localStorage.getItem( 'Rotoscoper' ) )
           },
           save_frame: function(){
+
             var _storage = app.storage();
             
-            _storage.push({
-              currentTime: kernal.currentTime(),
-              frame: canvas.canvas.toDataURL()
-            })
-
+            _storage[kernal.currentTime().toFixed(1) + ''] = canvas.canvas.toDataURL();
+            
             localStorage.setItem('Rotoscoper', JSON.stringify( _storage ));
+
+            canvas.clearRect(0, 0, 600, 335)
           }
         };
         
         app.init()
 
-        kernal.currentTime(3)
-
-
         $('#advance').click(function(){
-
           kernal.currentTime(kernal.currentTime() + .1);
-
           app.save_frame();
-
         });
 
         $('#playback').toggle(function(){
-
           kernal.play();
-          $(this).text('pause');
-          
-          kernal.listen('timeupdate', function(){
-            console.log(this.currentTime())
-            console.log(app.storage())
-          });
-          
+          $(this).text('Pause');
         }, function(){
           kernal.pause();
-          $(this).text('play');
+          $(this).text('Play');
         })
 
       });
@@ -121,8 +129,9 @@
   </script>
 </head>
 <body>
-  <button id="advance" style="float: right">Advance</button>
-  <button id="playback" style="float: right">Playback</button>
+  <button id="advance" style="margin: 0 0 0 750px">Advance</button>
+  <button id="playback" style="margin: 0 0 0 750px">Play</button>
+  <span style="float: right">Current Time: <span id="time"></span></span>
   <canvas id="canvas" width="600px" height="335px" style="position: absolute; top: 0px; left: 0px; z-index: 2; "></canvas>
 </body>
 </html>
