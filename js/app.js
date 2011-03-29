@@ -12,9 +12,180 @@
  *
  */
 
+(function( global, $ ) {
+
+
+  //  rotoFrame public API
+  function rotoFrame( options ) {
+    return new Frame( options );
+  }
+
+  //  Frame ctor
+  //    deps: Popcorn, jQuery, Underscore
+  function Frame( options ) {
+
+    var self = this;
+
+    options.fps || ( options.fps = 35 );
+  
+    _.extend( this, options );
+
+    this.frames = {
+      data: null, 
+      last: null
+    };
+    
+    this.kernal.listen( "play", function() {
+
+      self.frames.data = self.storage();
+
+      //  Call the rendering throttler
+      self.throttle();
+
+    }); 
+
+    this.initMouse();
+  
+    return this;
+  }
+
+  Frame.prototype.initMouse = function() {
+    var self = this;
+    //set pX and pY from first click
+    this.canvas
+      .bind('mousedown', function( e ) {
+
+        self.setAnchorPoint( e );
+
+      })
+      .bind('mouseup', function( e ){
+        self.canvas
+          .unbind('mousemove')
+      })
+  };
+
+  Frame.prototype.setAnchorPoint = function( e ) {
+    var self = this;
+    
+    this.canvas.bind('mousemove', function( e ) {
+      self.draw( e );
+    });
+    
+    this.context.pX = e.pageX;
+    this.context.pY = e.pageY;
+
+    e.preventDefault();
+  };
+
+  Frame.prototype.draw = function( e ) {
+    var moveX = e.pageX - this.context.pX,
+        moveY = e.pageY - this.context.pY;
+
+    this.move( moveX, moveY );
+  };
+  
+  Frame.prototype.move = function(changeX, changeY) {
+    this.context.beginPath();
+    this.context.moveTo( this.context.pX,this.context.pY );
+
+    this.context.pX += changeX;
+    this.context.pY += changeY;
+
+    this.context.lineTo( this.context.pX, this.context.pY );
+    this.context.stroke();
+  };
+  
+  Frame.prototype.storage  = function( item ) {
+    if ( !localStorage.getItem( 'Rotoscoper' ) ){
+      localStorage.setItem( 'Rotoscoper', '{}' );
+    }
+    
+    if ( item ) {
+      return JSON.parse( localStorage.getItem( 'Rotoscoper' ) )[ item ];
+    }
+
+    return JSON.parse( localStorage.getItem( 'Rotoscoper' ) );
+  };
+  
+  Frame.prototype.saveFrameData = function() {
+
+    var _storage = this.storage();
+
+    _storage[ this.kernal.currentTime().toFixed(1) + ''] = this.context.canvas.toDataURL();
+    
+    localStorage.setItem('Rotoscoper', JSON.stringify( _storage ));
+
+    this.context.clearRect(0, 0, 600, 335)
+  };    
+
+  Frame.prototype.throttle = function( time ) {
+    //  Return immediately if paused/ended
+    if ( this.kernal.media.paused || this.kernal.media.ended ) {
+      return;
+    }
+
+    time = +( ( time > 0 && +time.toFixed( 1 ) ) || time );
+    //  Process the current scene
+
+    this.render( time );
+    
+    //  Store ref to `this` context
+    var self = this;
+    
+    //  The actual throttling is handled here, 
+    //  throttle set to 20 fps
+    setTimeout(function () {
+      
+      //  Recall the processing throttler
+      self.throttle( time + .1 );
+
+    }, 1000/this.fps );  
+  }
+
+  Frame.prototype.render = function( time ) {
+
+    time = this.kernal.currentTime().toFixed( 1 );
+
+    //  Update time display 
+    if ( this.hasTimeDisplay ) {
+      $('#time').html( time );
+    }
+    
+    //  Clear last frame
+    this.context.clearRect( 0, 0, 600, 335 );      
+
+    var frame, $img;
+
+    //  Get frame data from cached frames index
+    frame = this.frames.data[ time ];
+
+    //  Return if no frame to draw
+    if ( !frame ) {
+
+      frame = this.frames.last;
+      
+      return;
+    }
+
+    
+    $img = $('<img>', {
+      src : frame
+    }).get(0);
+
+    this.frames.last = frame;
+    
+    this.context.drawImage( $img, 0, 0, 600, 335 );
+
+  };
+
+  global.rotoFrame = rotoFrame;  
+
+})( window, jQuery );
+
 $(function(){
   var video = $('<video>', {
-        src: '../video/trailer.mp4',
+        id: 'subject',
+        src: 'trailer.ogv',
         css:{
           width: 600,
           position: 'absolute',
@@ -26,111 +197,83 @@ $(function(){
       .appendTo('body')
       .get(0),
 
-      kernal = Popcorn(video)
+      kernal = Popcorn(video);
 
 
-  kernal.listen('canplaythrough', function(){
 
-    var canvasElem = $('#canvas'),
-        canvas = canvasElem
-          .get(0)
-          .getContext("2d");
+  kernal.listen('canplaythrough', function() {
 
-    kernal.listen('timeupdate', function(){
+    var canvas = $('#canvas'),
+        context = canvas.get(0).getContext("2d");
 
-       $('#time').html( this.currentTime().toFixed(1) );
+    context.lineWidth = 3;
+    context.strokeStyle = 'gray';
+    context.lineCap = 'round';
+    context.pX = undefined;
+    context.pY = undefined;
 
-       canvas.clearRect(0, 0, 600, 335);
-
-       var _img = $('<img>', {
-         src : app.storage( this.currentTime().toFixed( 1 ) )
-       }).get(0)
-
-       canvas.drawImage( _img, 0, 0, 600, 335 );
-
-       // console.log( app.storage( this.currentTime().toFixed(1) ) );
-
-    });
     
-    canvas.lineWidth = 3;
-    canvas.strokeStyle = 'gray';
-    canvas.lineCap = 'round';
-    canvas.pX = undefined;
-    canvas.pY = undefined;
-    
-    var app = window.app = {
 
-      //bind click events
-      init: function() {
+    var roto = rotoFrame({
+                  kernal: kernal,
+                  context: context, 
+                  canvas: canvas, 
+                  hasTimeDisplay: true
+                });
 
-        //set pX and pY from first click
-        canvasElem
-          .bind('mousedown', app.set_anchor_point)
-          .bind('mouseup', function(e){
-            canvasElem
-              .unbind('mousemove', app.draw)
-          })
-      },
 
-      set_anchor_point: function(e) {
-        canvasElem.bind('mousemove', app.draw)
-        canvas.pX = e.pageX;
-        canvas.pY = e.pageY;
-        e.preventDefault();
-      },
+    $('input[name="colorpicker"]').bind('change blur', function() {
 
-      draw: function(e) {
-        var moveX = e.pageX - canvas.pX,
-            moveY = e.pageY - canvas.pY;
-        app.move(moveX, moveY);
-      },
-      move: function(changeX, changeY) {
-        canvas.beginPath();
-        canvas.moveTo(canvas.pX,canvas.pY);
+      var val = $(this).val();
 
-        canvas.pX += changeX;
-        canvas.pY += changeY;
-
-        canvas.lineTo(canvas.pX, canvas.pY);
-        canvas.stroke();
-      },
-      storage : function( item ){
-        if ( !localStorage.getItem( 'Rotoscoper' ) ){
-          localStorage.setItem( 'Rotoscoper', '{}' )
-        }
-        
-        if( item ) {
-          return JSON.parse( localStorage.getItem( 'Rotoscoper' ) )[ item ]
-        }
-
-        return JSON.parse( localStorage.getItem( 'Rotoscoper' ) )
-      },
-      save_frame: function(){
-
-        var _storage = app.storage();
-        
-        _storage[kernal.currentTime().toFixed(1) + ''] = canvas.canvas.toDataURL();
-        
-        localStorage.setItem('Rotoscoper', JSON.stringify( _storage ));
-
-        canvas.clearRect(0, 0, 600, 335)
+      if ( context && context.strokeStyle ) {
+        context.strokeStyle = val;
       }
-    };
-    
-    app.init()
-
-    $('#advance').click(function(){
-      kernal.currentTime(kernal.currentTime() + .1);
-      app.save_frame();
     });
+
+    $('input[name="sizepicker"]').bind('change', function() {
+
+      var val = $(this).val();
+
+      if ( context && context.lineWidth ) {
+        context.lineWidth = val;
+      }
+    
+    });
+
+    $('#advance-fw,#advance-rw').click(function(){
+
+      roto.saveFrameData();
+
+      kernal.currentTime(
+        $(this)[0].id === 'advance-rw' ?
+          kernal.currentTime() - .1 :
+          kernal.currentTime() + .1
+      );
+
+      $('#time').html( kernal.currentTime().toFixed(1) );
+
+    });
+    
+    $('#reset').click(function(){
+      kernal.currentTime(0);
+    });    
 
     $('#playback').toggle(function(){
       kernal.play();
-      $(this).text('Pause');
+      $(this).text('||').attr('alt', 'pause');
     }, function(){
       kernal.pause();
-      $(this).text('Play');
-    })
+      $(this).text('>').attr('alt', 'play');
+    });
+
+    var $footer = $('footer');
+    
+    $('input,button').hover(function() {
+      $footer.html( $(this).attr('alt') );
+    }, function() {
+      $footer.empty();
+    });
 
   });
 })
