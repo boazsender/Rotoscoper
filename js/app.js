@@ -17,7 +17,7 @@
     }
 
     //  Frame ctor
-    //    deps: jQuery, Underscore
+    //    deps: Popcorn, jQuery, Underscore
     function Frame( options ) {
 
       var self = this;
