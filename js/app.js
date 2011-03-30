@@ -222,18 +222,18 @@ $(function(){
                 }), 
     colorHandler = function( hsb, hex, rgb, el, type ) {
 
-    	$( el ).val( hex );
+      $( el ).val( hex );
 
-    	context.strokeStyle = "#" + hex;
+      context.strokeStyle = "#" + hex;
 
-    	if ( type === "submit" ) {
-	    	$( el ).ColorPickerHide();
-    	}
-		};
+      if ( type === "submit" ) {
+        $( el ).ColorPickerHide();
+      }
+    };
 
     $('#colorpicker').ColorPicker({
-			onChange: colorHandler,
-			onSubmit: colorHandler 
+      onChange: colorHandler,
+      onSubmit: colorHandler 
     });
 
     $('#sizepicker').bind('change', function() {
