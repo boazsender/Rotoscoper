@@ -224,6 +224,8 @@ $(function(){
 
     	$( el ).val( hex );
 
+    	context.strokeStyle = "#" + hex;
+
     	if ( type === "submit" ) {
 	    	$( el ).ColorPickerHide();
     	}
