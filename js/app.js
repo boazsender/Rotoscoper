@@ -21,14 +21,14 @@
   }
 
   //  Frame ctor
-  //    deps: Popcorn, jQuery, Underscore
+  //    deps: Popcorn, jQuery
   function Frame( options ) {
 
     var self = this;
 
     options.fps || ( options.fps = 35 );
   
-    _.extend( this, options );
+    $.extend( this, options );
 
     this.frames = {
       data: null, 
@@ -219,26 +219,28 @@ $(function(){
                   context: context, 
                   canvas: canvas, 
                   hasTimeDisplay: true
-                });
+                }), 
+    colorHandler = function( hsb, hex, rgb, el, type ) {
 
+    	$( el ).val( hex );
 
-    $('input[name="colorpicker"]').bind('change blur', function() {
+    	if ( type === "submit" ) {
+	    	$( el ).ColorPickerHide();
+    	}
+		};
 
-      var val = $(this).val();
-
-      if ( context && context.strokeStyle ) {
-        context.strokeStyle = val;
-      }
+    $('#colorpicker').ColorPicker({
+			onChange: colorHandler,
+			onSubmit: colorHandler 
     });
 
-    $('input[name="sizepicker"]').bind('change', function() {
+    $('#sizepicker').bind('change', function() {
 
       var val = $(this).val();
 
       if ( context && context.lineWidth ) {
         context.lineWidth = val;
       }
-    
     });
 
     $('#advance-fw,#advance-rw,#reset').click(function(){
